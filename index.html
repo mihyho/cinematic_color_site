@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>영화적 색감</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 촬영 현장의 조용하고 정밀한 말투, 장식 없이 수치로 말한다
+   IDEA: 시네마 카메라의 온보드 모니터 + 필름 캔 라벨처럼 붙는 영화 선택 릴
+   PICTURE: 지금 보고 있는 장면이 그레이딩되는 실시간 뷰파인더 자체
+   COLOUR and TYPE: 모니터 블랙 / 종이빛 잉크 / REC 빨강 하나, Barlow Condensed HUD + IBM Plex Sans KR
+   LAYOUT: 휴대폰은 뷰파인더 위, 덱 아래 / 넓은 화면은 뷰파인더 왼쪽 고정, 덱 오른쪽 스크롤 */
+:root{color-scheme:dark;--bg:#0d0e10;--panel:#15171a;--line:#2b2e33;--ink:#ecebe6;--dim:#9c9d98;--rec:#e5322d;--hud:'Barlow Condensed',system-ui,sans-serif}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'IBM Plex Sans KR',system-ui,sans-serif;overflow-x:clip}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;min-height:44px;padding:0 14px}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.app{display:grid;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.app{grid-template-columns:minmax(0,1.35fr) minmax(360px,1fr);height:100vh}.vf{height:100vh!important;position:sticky;top:0}.deck{height:100vh;overflow-y:auto}}
+.vf{position:relative;height:min(62vh,640px);background:#000;overflow:hidden;touch-action:none;user-select:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.bar{position:absolute;background:rgba(0,0,0,.84);pointer-events:none;transition:all .25s}
+.frame{position:absolute;pointer-events:none;transition:all .25s}
+.frame i{position:absolute;width:18px;height:18px;border:0 solid rgba(255,255,255,.75)}
+.frame i:nth-child(1){left:6px;top:6px;border-left-width:1.5px;border-top-width:1.5px}
+.frame i:nth-child(2){right:6px;top:6px;border-right-width:1.5px;border-top-width:1.5px}
+.frame i:nth-child(3){left:6px;bottom:6px;border-left-width:1.5px;border-bottom-width:1.5px}
+.frame i:nth-child(4){right:6px;bottom:6px;border-right-width:1.5px;border-bottom-width:1.5px}
+.hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;gap:12px;padding:10px 12px;font:500 15px/1.2 var(--hud);letter-spacing:.02em;color:#f3f2ee;text-shadow:0 1px 2px #000;pointer-events:none}
+.hud.t{top:0}.hud.b{bottom:0;align-items:flex-end}
+.hud span{white-space:nowrap}.hud .g{display:flex;gap:14px;flex-wrap:wrap}
+.rec{display:inline-flex;align-items:center;gap:6px}.rec b{width:9px;height:9px;border-radius:50%;background:var(--rec);animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.ttl{font:600 19px/1.15 var(--hud);max-width:60vw;overflow:hidden;text-overflow:ellipsis}
+.wipe{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 6px #000;display:none;pointer-events:none}
+.wipe::after{content:'원본 · 그레이딩';position:absolute;top:50%;left:8px;transform:translateY(-50%);font:500 13px var(--hud);white-space:nowrap;background:rgba(0,0,0,.6);padding:3px 7px;border-radius:6px}
+.gate{position:absolute;inset:0;display:none;place-content:center;gap:12px;text-align:center;padding:24px;background:rgba(10,11,13,.93);z-index:2}
+.hud.b>div:first-child{flex:1;overflow:hidden}#hName{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hud.b .g{flex:none}
+.gate.on{display:grid}.gate p{margin:0;color:var(--dim);max-width:34ch;font-size:15px}
+.gate .row{justify-content:center}
+.deck{padding:16px max(4vw,14px) 40px;display:grid;gap:18px;align-content:start}
+h1{font:600 32px/1.05 var(--hud);margin:4px 0 0;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--dim);font-size:14px;margin:4px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.reel{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.can{flex:none;scroll-snap-align:start;width:132px;min-height:96px;padding:0;text-align:left;display:grid;grid-template-rows:22px 1fr;overflow:hidden;border-radius:12px}
+.can .pal{display:flex}.can .pal i{flex:1}
+.can .lb{padding:8px 10px;display:grid;align-content:start;gap:2px}
+.can .lb b{font-weight:600;font-size:14px;line-height:1.25}.can .lb small{color:var(--dim);font:500 13px var(--hud)}
+.can[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);color:#111;border-color:var(--ink)}
+.chip{font-size:14px}
+.ctl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.shoot{width:64px;height:64px;border-radius:50%;padding:0;border:3px solid var(--ink);background:var(--rec);box-shadow:inset 0 0 0 4px var(--bg)}
+label.rg{display:grid;gap:2px;font-size:13px;color:var(--dim)}
+input[type=range]{width:100%;height:44px;accent-color:var(--ink);margin:0}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.sw div{border-radius:8px;height:54px;display:flex;align-items:flex-end;padding:4px 6px;font:500 13px var(--hud);color:#fff;text-shadow:0 1px 2px #000}
+details{border-top:1px solid var(--line);padding:10px 0 2px}
+summary{cursor:pointer;font-weight:600;min-height:36px;display:flex;align-items:center}
+.note{font-size:15px;color:#d8d7d2}.note p{margin:.4em 0}.note ul{margin:.3em 0;padding-left:1.2em}.note li{margin:.15em 0}
+.k{color:var(--dim);font-size:13px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}td{border-top:1px solid var(--line);padding:6px 8px 6px 0;vertical-align:top}td:first-child{color:var(--dim);white-space:nowrap;width:7em}
+a{color:var(--ink)}.src a{overflow-wrap:anywhere;font-size:13px}
+.tag{display:inline-block;font:500 13px var(--hud);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin-right:4px;color:var(--dim)}
+.adj{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.86);display:none;place-items:center;padding:16px;z-index:5}
+.sheet.on{display:grid}.sheet .in{max-width:min(960px,100%);display:grid;gap:12px}
+.sheet img{width:100%;border-radius:6px;display:block}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#111;padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:6}
+.toast.on{opacity:1}
+@media(prefers-reduced-motion:reduce){.rec b{animation:none}.bar,.frame{transition:none}}
+@media(max-width:600px){#hCam{display:none}.vf{height:58vh}.ttl{font-size:17px}.hud{font-size:14px}table{font-size:13px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="vf" id="vf" aria-label="뷰파인더">
+    <canvas id="cv"></canvas>
+    <div class="bar" id="b1"></div><div class="bar" id="b2"></div><div class="bar" id="b3"></div><div class="bar" id="b4"></div>
+    <div class="frame" id="fr"><i></i><i></i><i></i><i></i></div>
+    <div class="wipe" id="wipe"></div>
+    <div class="hud t"><div class="g"><span class="rec"><b></b><span id="mode">CHART</span></span><span id="tc">00:00:00:00</span></div><div class="g"><span id="hAsp">2.39:1</span><span id="hWb">5600K</span></div></div>
+    <div class="hud b"><div><div class="ttl" id="hTitle">—</div><span id="hName"></span></div><div class="g"><span id="hFps">24 fps</span><span id="hCam"></span></div></div>
+    <div class="gate" id="gate"><p id="gateMsg"></p><div class="row"><button id="gPhoto">사진 찍기</button><button id="gVideo">영상 찍기</button><button id="gClose">테스트 차트로 보기</button></div></div>
+  </section>
+
+  <section class="deck">
+    <div><h1>영화적 색감</h1><p class="sub">17편 · 40가지 룩. 고르면 지금 화면에 바로 입혀집니다.</p></div>
+    <div class="row" role="group" aria-label="입력">
+      <button id="sCam">카메라</button><button id="sFile">사진·영상 불러오기</button><button id="sChart">테스트 차트</button><button id="sFlip" hidden>전면/후면</button>
+      <input type="file" id="fAny" accept="image/*,video/*" hidden><input type="file" id="fPhoto" accept="image/*" capture="environment" hidden><input type="file" id="fVideo" accept="video/*" capture="environment" hidden>
+    </div>
+    <div><div class="reel" id="reel" role="group" aria-label="영화 선택"></div><div class="row" id="vars" role="group" aria-label="장면 룩"></div></div>
+    <div class="ctl">
+      <button class="chip" id="cmp" aria-pressed="false">비교</button>
+      <label class="rg">강도 <span id="mixV">100%</span><input type="range" id="mix" min="0" max="100" value="100"></label>
+      <button class="shoot" id="shoot" aria-label="스틸 촬영"></button>
+    </div>
+    <div class="row"><button class="chip" id="hold" aria-pressed="false" hidden>스텝 프린팅</button><button class="chip" id="lb" aria-pressed="true">화면비 마스크</button><button class="chip" id="eco" aria-pressed="false">저전력</button></div>
+    <div><div class="k">이 룩의 팔레트 <span class="tag">추정</span></div><div class="sw" id="sw"></div></div>
+    <div id="notes"></div>
+    <details id="adjBox"><summary>직접 조정</summary>
+      <div class="adj" id="adj"></div>
+      <div class="row" style="margin-top:8px"><button id="aReset">초기화</button><button id="aCopy">값 복사</button></div>
+      <p class="k">조정값은 원본 수치 위에 더해집니다. 마음에 들면 복사해서 넘겨주세요. 프리셋에 반영할게요.</p>
+    </details>
+    <p class="k">영화 스틸·포스터는 쓰지 않았습니다. 수치는 공개 인터뷰·기사를 바탕으로 역산한 추정치이고, 원작의 실제 LUT가 아닙니다.</p>
+  </section>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-label="촬영한 스틸"><div class="in"><img id="shot" alt="촬영한 스틸"><div class="row"><button id="dl">저장</button><button id="shClose">닫기</button></div><p class="k" style="margin:0">저장이 막히면 이미지를 길게 눌러 저장하세요.</p></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200)};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const BANDS=['red','orange','yellow','green','aqua','blue','purple','magenta'];
+const ADJ=[['warmth','따뜻함',-1,1],['tint','틴트 (초록↔마젠타)',-1,1],['sat','채도',-0.6,0.6],['contrast','대비',-0.5,0.5],['grain','그레인',-0.5,0.5],['bloom','블룸',-0.5,0.5],['vignette','비네트',-0.5,0.5]];
+let DATA=null,film=null,preset=null,adj={},srcKind='chart',facing='environment',stream=null,holdOn=false,eco=false,maskOn=true,split=-1,mixV=1;
+
+/* ---------- WebGL ---------- */
+const cv=$('cv');
+const gl=cv.getContext('webgl',{premultipliedAlpha:false,preserveDrawingBuffer:false,antialias:false});
+const VS=`attribute vec2 p;varying vec2 vUv;varying vec2 vSrc;uniform vec2 uSc,uOf,uFo,uFs;uniform float uMir;varying vec2 vFr;
+void main(){vUv=p*.5+.5;vFr=(vUv-uFo)/uFs;vec2 s=uOf+vFr*uSc;s.x=mix(s.x,1.-s.x,uMir);vSrc=s;gl_Position=vec4(p,0.,1.);}`;
+const GRADE=`precision mediump float;varying vec2 vUv;varying vec2 vSrc;varying vec2 vFr;uniform sampler2D uSrc;
+uniform vec3 uWB,uLift,uGamma,uGain,uShT,uHiT,uMonoW,uHazeC;uniform mat3 uMat;
+uniform float uSat,uEnr,uDuo,uBlack,uWhite,uS,uMono,uSel,uHaze;uniform float uBS[8];uniform float uBL[8];uniform vec4 uSelA;uniform vec2 uSelB;
+const vec3 W=vec3(.2126,.7152,.0722);
+vec3 rgb2hsv(vec3 c){vec4 K=vec4(0.,-1./3.,2./3.,-1.);vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));float d=q.x-min(q.w,q.y);return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x);}
+vec3 hsv2rgb(vec3 c){vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.);return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y);}
+float ctr(int i){if(i==0)return 0.;if(i==1)return 30.;if(i==2)return 60.;if(i==3)return 120.;if(i==4)return 180.;if(i==5)return 240.;if(i==6)return 280.;return 320.;}
+float hd(float a,float b){float d=abs(a-b);return min(d,360.-d);}
+void main(){
+ vec3 c=texture2D(uSrc,vSrc).rgb;
+ c=uMat*(c*uWB);
+ c=mix(c,vec3(c.r,vec2((c.g+c.b)*.5)),uDuo);
+ vec3 h=rgb2hsv(clamp(c,0.,1.));float hue=h.x*360.;
+ float m=(1.-smoothstep(uSelA.y,uSelA.y+uSelA.z,hd(hue,uSelA.x)))*smoothstep(uSelB.x,uSelB.x+.1,h.y)*smoothstep(uSelB.y,uSelB.y+.1,h.z);
+ float ws=0.,bs=0.,bl=0.;
+ for(int i=0;i<8;i++){float d=hd(hue,ctr(i));float w=exp(-d*d/800.);ws+=w;bs+=w*uBS[i];bl+=w*uBL[i];}
+ bs/=ws;bl/=ws;
+ h.y=clamp(h.y*(1.+bs),0.,1.);h.z=max(h.z*(1.+bl*.6*h.y),0.);c=hsv2rgb(h);vec3 pre=c;
+ float L=dot(c,W);c=mix(vec3(L),c,uSat);
+ vec3 e=pow(max(mix(c,vec3(dot(c,W)),uEnr),0.),vec3(1.+.62*uEnr));c=mix(c,e,step(.001,uEnr));
+ c=c+uLift*(1.-c);
+ c=pow(max(c,0.),1./max(1.+uGamma,.2));
+ c=c*(1.+uGain);
+ L=dot(clamp(c,0.,1.),W);
+ c+=uShT*(1.-smoothstep(.05,.45,L))+uHiT*smoothstep(.55,.95,L);
+ c=clamp(c,0.,1.);c=mix(c,c*c*(3.-2.*c),uS);
+ c=uBlack+(uWhite-uBlack)*c;
+ c=1.-(1.-c)*(1.-uHazeC*uHaze);
+ float Lm=dot(c,uMonoW);vec3 mono=vec3(Lm)*vec3(1.,1.,1.02);
+ vec3 k2=pre*(Lm/max(dot(pre,W),.001));vec3 keep=clamp(mix(vec3(Lm),k2,uSelA.w),0.,1.);
+ c=mix(c,mix(mono,keep,m*uSel),uMono);
+ float inS=step(0.,vSrc.x)*step(vSrc.x,1.)*step(0.,vSrc.y)*step(vSrc.y,1.);
+ gl_FragColor=vec4(clamp(c,0.,1.)*inS,1.);}`;
+const POST=`precision mediump float;varying vec2 vUv;varying vec2 vSrc;varying vec2 vFr;uniform float uFa;uniform sampler2D uG,uSrc;
+uniform vec2 uPx;uniform float uAsp,uBloom,uHal,uStreak,uGrain,uVig,uSharp,uMix,uSplit,uT;uniform vec3 uStC;
+const vec3 W=vec3(.2126,.7152,.0722);
+float hash(vec2 p){p=mod(p,512.);return fract(sin(dot(p,vec2(12.9898,78.233))+uT)*43758.5453);}
+void main(){
+ vec3 g=texture2D(uG,vUv).rgb;vec3 b1=vec3(0.),b2=vec3(0.),bl=vec3(0.),st=vec3(0.);
+ vec2 k=vec2(1./uAsp,1.);
+ for(int i=0;i<12;i++){float a=float(i)*.5236;vec2 d=vec2(cos(a),sin(a))*k;
+  vec3 s1=texture2D(uG,vUv+d*.016).rgb;vec3 s2=texture2D(uG,vUv+d*.042+.0).rgb;
+  bl+=s1;b1+=max(s1-.7,0.)/.3;b2+=max(s2-.7,0.)/.3;}
+ b1/=12.;b2/=12.;bl/=12.;
+ for(int i=0;i<10;i++){float x=(float(i)-4.5)/4.5;st+=max(texture2D(uG,vUv+vec2(x*.09,0.)).rgb-.82,0.)/.18*(1.-abs(x));}
+ st/=5.;
+ g+=(b1*.55+b2*.45)*uBloom*.85;
+ g+=vec3(1.,.32,.12)*dot(b1,vec3(.333))*uHal*.9;
+ g+=uStC*dot(st,vec3(.333))*uStreak;
+ g+=(g-bl)*uSharp;
+ vec2 q=(vFr-.5)*vec2(uFa,1.);float r=length(q)/length(vec2(uFa,1.)*.5);
+ g*=1.-uVig*.6*smoothstep(.3,1.,r);
+ float n=hash(floor(gl_FragCoord.xy))-.5;float Lg=dot(g,W);
+ g+=n*uGrain*.16*(.35+max(1.-abs(Lg-.45)*1.6,0.));
+ vec3 o=texture2D(uSrc,vSrc).rgb*step(0.,vSrc.x)*step(vSrc.x,1.)*step(0.,vSrc.y)*step(vSrc.y,1.);
+ g=mix(o,clamp(g,0.,1.),uMix);
+ if(uSplit>=0.&&vUv.x<uSplit)g=o;
+ gl_FragColor=vec4(g,1.);}`;
+function prog(fs){const p=gl.createProgram();for(const[t,s]of[[gl.VERTEX_SHADER,VS],[gl.FRAGMENT_SHADER,fs]]){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));gl.attachShader(p,sh)}gl.linkProgram(p);const u={};return{p,u:n=>u[n]??(u[n]=gl.getUniformLocation(p,n))}}
+let P1,P2,srcTex,fbo,fboTex,fboW=0,fboH=0;
+function tex(){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);for(const[k,v]of[[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v);return t}
+function initGL(){
+  if(!gl){$('gateMsg').textContent='이 브라우저는 WebGL을 지원하지 않아 색감을 입힐 수 없어요.';$('gate').classList.add('on');return false}
+  P1=prog(GRADE);P2=prog(POST);
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  for(const P of[P1,P2]){const l=gl.getAttribLocation(P.p,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0)}
+  srcTex=tex();fboTex=tex();fbo=gl.createFramebuffer();return true}
+function sizeFbo(w,h){if(w===fboW&&h===fboH)return;fboW=w;fboH=h;gl.bindTexture(gl.TEXTURE_2D,fboTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,fboTex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
+
+/* ---------- preset → uniforms ---------- */
+const hueVec=(h,s)=>{const f=n=>{const k=(n+h/60)%6;return 1-Math.max(0,Math.min(k,4-k,1))};const c=[f(5),f(3),f(1)];const L=.2126*c[0]+.7152*c[1]+.0722*c[2];return c.map(x=>(x-L)*s*.35)};
+function uniforms(){
+  const g=preset.grade,e=preset.engine,t=preset.texture,A=k=>adj[k]||0;
+  const w=e.warmth+A('warmth'),ti=g.white_balance.tint+A('tint');
+  let wb=[1+.28*w+.08*ti,1-.2*ti,1-.28*w+.08*ti];const L=.2126*wb[0]+.7152*wb[1]+.0722*wb[2];wb=wb.map(x=>x/L);
+  const M=e.matrix||[1,0,0,0,1,0,0,0,1];
+  const mono=g.monochrome?.enabled?1:0,sel=g.selective_color||{};
+  return{wb,mat:[M[0],M[3],M[6],M[1],M[4],M[7],M[2],M[5],M[8]],duo:e.duotone||0,enr:e.enr||0,
+    sat:Math.max(0,g.saturation+A('sat')),bs:BANDS.map(b=>g.hue_adjust[b].sat),bl:BANDS.map(b=>g.hue_adjust[b].lum),
+    lift:g.lift,gamma:g.gamma,gain:g.gain,shT:hueVec(g.split_tone.shadow_hue,g.split_tone.shadow_sat),hiT:hueVec(g.split_tone.highlight_hue,g.split_tone.highlight_sat),
+    black:Math.max(0,g.contrast.black*.7),white:g.contrast.white,s:Math.min(1,Math.max(0,g.contrast.s_curve+A('contrast'))),
+    haze:e.haze||0,hazeC:e.hazeColor||[1,1,1],mono,monoW:g.monochrome?.channel_weights||[.2126,.7152,.0722],
+    sel:sel.enabled?1:0,selA:[sel.hue_center||0,sel.hue_width||0,(sel.feather||.1)*100,sel.chroma_gain||1],selB:[sel.sat_min||0,sel.lum_min||0],
+    bloom:Math.max(0,(t.bloom||0)+A('bloom')),hal:t.halation||0,grain:Math.max(0,(t.grain||0)+A('grain')),vig:Math.max(0,(t.vignette||0)+A('vignette')),
+    sharp:Math.max(0,((t.sharpness??.7)-.6))*.9,streak:e.streak?.55:0,stC:/앰버|amber|따뜻/i.test(t.flare||'')?[1,.6,.3]:[.45,.65,1]}}
+let U=null;
+
+/* ---------- sources ---------- */
+const video=document.createElement('video');video.playsInline=true;video.muted=true;video.loop=true;video.setAttribute('playsinline','');Object.assign(video.style,{position:'fixed',width:'1px',height:'1px',opacity:'0',pointerEvents:'none',left:'0',top:'0'});document.body.appendChild(video);
+let still=null,srcW=1,srcH=1,dirty=true,lastHold=-1;
+function chart(){const c=document.createElement('canvas');c.width=1280;c.height=720;const x=c.getContext('2d');
+  let gr=x.createLinearGradient(0,0,0,430);gr.addColorStop(0,'#3f7fc9');gr.addColorStop(1,'#bcd6ea');x.fillStyle=gr;x.fillRect(0,0,1280,430);
+  gr=x.createRadialGradient(1040,120,10,1040,120,140);gr.addColorStop(0,'#fffbe8');gr.addColorStop(.25,'#ffe7a8');gr.addColorStop(1,'rgba(255,220,150,0)');x.fillStyle=gr;x.fillRect(880,0,320,280);
+  x.fillStyle='#5f7d3a';x.fillRect(0,380,1280,120);for(let i=0;i<14;i++){x.fillStyle=i%2?'#3e6b2a':'#4f8a34';x.beginPath();x.arc(60+i*92,392,58+(i*37%30),Math.PI,0);x.fill()}
+  x.fillStyle='#c8a06a';x.fillRect(0,500,1280,220);gr=x.createLinearGradient(0,500,0,720);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(40,25,10,.55)');x.fillStyle=gr;x.fillRect(0,500,1280,220);
+  x.fillStyle='#2b2a2e';x.fillRect(70,230,300,330);x.fillStyle='#ff3fa0';x.fillRect(95,255,250,46);x.fillStyle='#22e0ff';x.fillRect(95,320,250,46);x.fillStyle='#ffd23a';x.fillRect(95,385,250,46);
+  x.fillStyle='#e9e3d6';x.fillRect(130,470,180,90);
+  x.fillStyle='#c3a088';x.beginPath();x.ellipse(640,330,95,118,0,0,7);x.fill();x.fillStyle='#d9b49a';x.beginPath();x.ellipse(615,300,48,58,0,0,7);x.fill();
+  x.fillStyle='#b8202a';x.beginPath();x.moveTo(500,720);x.lineTo(540,470);x.lineTo(740,470);x.lineTo(780,720);x.fill();
+  const P=['#735244','#c29682','#627a9d','#576c43','#8580b1','#67bdaa','#d67e2c','#505ba6','#c15a63','#5e3c6c','#9dbc40','#e0a32e'];
+  P.forEach((c,i)=>{x.fillStyle=c;x.fillRect(860+(i%4)*96,300+Math.floor(i/4)*96,88,88)});
+  for(let i=0;i<10;i++){const v=Math.round(i/9*255);x.fillStyle=`rgb(${v},${v},${v})`;x.fillRect(860+i*38.4,600,38.4,70)}
+  return c}
+const CHART=chart();
+function useStill(el,w,h){still=el;srcW=w;srcH=h;dirty=true}
+function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('sFlip').hidden=true}
+function setMode(k){srcKind=k;$('mode').textContent={live:'LIVE',photo:'PHOTO',clip:'CLIP',chart:'CHART'}[k]}
+function showChart(){stopCam();video.pause();useStill(CHART,1280,720);setMode('chart');$('gate').classList.remove('on')}
+async function startCam(){
+  stopCam();
+  if(!navigator.mediaDevices?.getUserMedia)return camBlocked();
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720}},audio:false});
+    video.srcObject=stream;await video.play();still=null;setMode('live');$('sFlip').hidden=false;$('gate').classList.remove('on')}
+  catch(err){camBlocked()}}
+function camBlocked(){$('gateMsg').textContent='이 창에서는 실시간 카메라가 막혀 있어요. 사진이나 짧은 영상을 찍으면 같은 엔진으로 바로 그레이딩됩니다. HTTPS로 배포한 사이트에서는 실시간 카메라가 켜져요.';$('gate').classList.add('on')}
+function loadFile(f){if(!f)return;stopCam();const url=URL.createObjectURL(f);
+  if(f.type.startsWith('video')){video.srcObject=null;video.src=url;video.play().catch(()=>{});still=null;setMode('clip')}
+  else{const im=new Image();im.onload=()=>{useStill(im,im.naturalWidth,im.naturalHeight);setMode('photo')};im.src=url}
+  $('gate').classList.remove('on')}
+
+/* ---------- render ---------- */
+const t0=performance.now();
+function frame(now){
+  requestAnimationFrame(frame);if(!U)return;
+  const vf=$('vf'),dpr=Math.min(devicePixelRatio||1,2)*(eco?.55:1),W=Math.round(vf.clientWidth*dpr),H=Math.round(vf.clientHeight*dpr);
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}sizeFbo(W,H);
+  gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  if(still){if(dirty){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,still);dirty=false}}
+  else if(video.readyState>=2){srcW=video.videoWidth;srcH=video.videoHeight;
+    const hold=holdOn&&preset.engine.hold,step=hold?Math.floor((now-t0)/1000*24/hold):-2;
+    if(!hold||step!==lastHold){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);lastHold=step}}
+  const sa=srcW/srcH,ca=W/H,r=RB||{x:0,y:0,aw:1,ah:1,w:1,h:1};
+  const fo=maskOn?[r.x/r.w,(r.h-r.y-r.ah)/r.h]:[0,0],fs=maskOn?[r.aw/r.w,r.ah/r.h]:[1,1],fa=maskOn?r.aw/r.ah:ca;
+  let sc=[1,1],of=[0,0];if(sa>fa){sc=[fa/sa,1];of=[(1-fa/sa)/2,0]}else{sc=[1,sa/fa];of=[0,(1-sa/fa)/2]}
+  const mir=srcKind==='live'&&facing==='user'?1:0;
+  gl.viewport(0,0,W,H);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.useProgram(P1.p);const u=P1.u;
+  gl.uniform2fv(u('uSc'),sc);gl.uniform2fv(u('uOf'),of);gl.uniform2fv(u('uFo'),fo);gl.uniform2fv(u('uFs'),fs);gl.uniform1f(u('uMir'),mir);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.uniform1i(u('uSrc'),0);
+  gl.uniform3fv(u('uWB'),U.wb);gl.uniformMatrix3fv(u('uMat'),false,U.mat);gl.uniform1f(u('uDuo'),U.duo);gl.uniform1f(u('uEnr'),U.enr);gl.uniform1f(u('uSat'),U.sat);
+  gl.uniform1fv(u('uBS'),U.bs);gl.uniform1fv(u('uBL'),U.bl);gl.uniform3fv(u('uLift'),U.lift);gl.uniform3fv(u('uGamma'),U.gamma);gl.uniform3fv(u('uGain'),U.gain);
+  gl.uniform3fv(u('uShT'),U.shT);gl.uniform3fv(u('uHiT'),U.hiT);gl.uniform1f(u('uBlack'),U.black);gl.uniform1f(u('uWhite'),U.white);gl.uniform1f(u('uS'),U.s);
+  gl.uniform1f(u('uHaze'),U.haze);gl.uniform3fv(u('uHazeC'),U.hazeC);gl.uniform1f(u('uMono'),U.mono);gl.uniform3fv(u('uMonoW'),U.monoW);
+  gl.uniform1f(u('uSel'),U.sel);gl.uniform4fv(u('uSelA'),U.selA);gl.uniform2fv(u('uSelB'),U.selB);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.useProgram(P2.p);const v=P2.u;
+  gl.uniform2fv(v('uSc'),sc);gl.uniform2fv(v('uOf'),of);gl.uniform2fv(v('uFo'),fo);gl.uniform2fv(v('uFs'),fs);gl.uniform1f(v('uFa'),fa);gl.uniform1f(v('uMir'),mir);
+  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,fboTex);gl.uniform1i(v('uG'),1);gl.uniform1i(v('uSrc'),0);
+  gl.uniform2f(v('uPx'),1/W,1/H);gl.uniform1f(v('uAsp'),ca);gl.uniform1f(v('uBloom'),U.bloom);gl.uniform1f(v('uHal'),U.hal);gl.uniform1f(v('uStreak'),U.streak);gl.uniform3fv(v('uStC'),U.stC);
+  gl.uniform1f(v('uGrain'),U.grain);gl.uniform1f(v('uVig'),U.vig);gl.uniform1f(v('uSharp'),U.sharp);gl.uniform1f(v('uMix'),mixV);gl.uniform1f(v('uSplit'),split);gl.uniform1f(v('uT'),(now%10000)/97);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  const f=Math.floor((now-t0)/1000*24),p2=n=>String(n).padStart(2,'0');
+  $('tc').textContent=`${p2(Math.floor(f/86400))}:${p2(Math.floor(f/1440)%60)}:${p2(Math.floor(f/24)%60)}:${p2(f%24)}`;
+  if(capReq){capReq=false;capture()}}
+let capReq=false;
+
+/* ---------- letterbox ---------- */
+function box(){const vf=$('vf'),w=vf.clientWidth,h=vf.clientHeight,a=preset?.engine.aspect||1.85;
+  let aw=w,ah=w/a;if(ah>h){ah=h;aw=h*a}const x=(w-aw)/2,y=(h-ah)/2,o=maskOn?1:0;
+  const S=(el,l,t,ww,hh)=>Object.assign($(el).style,{left:l+'px',top:t+'px',width:ww+'px',height:hh+'px',opacity:o});
+  S('b1',0,0,w,y);S('b2',0,y+ah,w,h-y-ah);S('b3',0,y,x,ah);S('b4',x+aw,y,w-x-aw,ah);
+  Object.assign($('fr').style,{left:x+'px',top:y+'px',width:aw+'px',height:ah+'px',opacity:o});return RB={x,y,aw,ah,w,h}}
+let RB=null;
+new ResizeObserver(()=>box()).observe($('vf'));
+
+/* ---------- UI ---------- */
+const pal=p=>p.grade.palette_hex||[];
+function renderReel(){$('reel').innerHTML=DATA.films.map(f=>{const c=pal(f.presets[0]);const pick=[c[0],c[Math.floor(c.length/2)],c[c.length-1]];
+  return`<button class="can" data-f="${f.id}" aria-pressed="${f===film}"><span class="pal">${pick.map(x=>`<i style="background:${x}"></i>`).join('')}</span><span class="lb"><b>${esc(f.title_ko)}</b><small>${f.year}${f.added_reason?' · 추가':''}</small></span></button>`}).join('')}
+function renderVars(){$('vars').innerHTML=film.presets.length>1?film.presets.map(p=>`<button class="chip" data-p="${p.id}" aria-pressed="${p===preset}">${esc(p.name)}</button>`).join(''):''}
+const li=a=>(a||[]).length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';
+function renderNotes(){const p=preset,c=p.credits,l=p.lighting||{},t=p.texture,e=p.engine;
+  const cred=[['촬영',c.dp],['컬러리스트',c.colorist],['카메라',c.camera],['필름·센서',c.film_stock_or_sensor],['렌즈',c.lens],['화면비',c.aspect_ratio],['후반',c.di_process],['메모',c.note]].filter(r=>r[1]);
+  const fx=[e.matrix&&'채널 행렬(필터·인쇄 에뮬레이션)',e.duotone&&'2색 테크니컬러 근사',e.enr&&'ENR(은 잔류) 근사',e.haze&&'대기 헤이즈',e.hold&&`스텝 프린팅 ${24/e.hold}fps`,e.streak&&'가로 플레어'].filter(Boolean);
+  $('notes').innerHTML=`
+  <details open><summary>의도</summary><div class="note"><p>${esc(p.intent)}</p>${p.added_reason||film.added_reason?`<p class="k">추가 선정 이유 · ${esc(p.added_reason||film.added_reason)}</p>`:''}</div></details>
+  <details><summary>조명</summary><div class="note"><p><b>키</b> ${esc(l.key)}</p>${li(l.sources)}<p><b>색온도</b> ${esc(l.color_temp)}<br><b>키:필</b> ${esc(l.ratio)}<br><b>장소</b> ${esc(l.indoor_outdoor)}</p>${li(l.special)}</div></details>
+  <details><summary>피부와 질감</summary><div class="note"><p>${esc(p.grade.skin)}</p><p><span class="tag">그레인 ${t.grain}</span><span class="tag">할레이션 ${t.halation}</span><span class="tag">블룸 ${t.bloom}</span><span class="tag">비네트 ${t.vignette}</span></p><p>${esc(t.grain_size)}</p><p>${esc(t.flare)}</p></div></details>
+  <details><summary>크레딧</summary><table class="note">${cred.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])}</td></tr>`).join('')}</table></details>
+  <details><summary>셰이더 메모</summary><div class="note">${li(p.shader_notes)}<p class="k">이 사이트의 해석 · 화이트밸런스를 ${e.wbSense==='light'?'광원 색온도(낮을수록 따뜻함)':'라이트룸식(높을수록 따뜻함)'}로 읽음${fx.length?' · '+fx.join(' · '):''}</p></div></details>
+  <details><summary>확인된 사실과 추정</summary><div class="note"><p class="k">확인됨</p>${li(film.confidence.verified)}<p class="k">추정</p>${li(film.confidence.estimated)}</div></details>
+  <details><summary>출처 ${film.sources.length}개</summary><div class="note src"><ul>${film.sources.map(s=>`<li><a href="${esc(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/,''))}</a></li>`).join('')}</ul></div></details>`}
+function renderSw(){$('sw').innerHTML=pal(preset).map(x=>`<div style="background:${x}">${x}</div>`).join('')}
+function renderAdj(){$('adj').innerHTML=ADJ.map(([k,n,a,b])=>`<label class="rg">${n} <span id="av-${k}">${(adj[k]||0).toFixed(2)}</span><input type="range" data-a="${k}" min="${a}" max="${b}" step="0.01" value="${adj[k]||0}"></label>`).join('')}
+function hud(){const g=preset.grade,c=preset.credits,e=preset.engine;
+  $('hTitle').textContent=film.title_ko;$('hName').textContent=preset.name+' · '+film.year;
+  $('hAsp').textContent=e.aspect.toFixed(2)+':1';$('hWb').textContent=g.white_balance.kelvin+'K · '+(g.white_balance.tint>=0?'M':'G')+Math.abs(g.white_balance.tint).toFixed(2);
+  $('hFps').textContent=holdOn&&e.hold?`${24/e.hold} fps ×${e.hold}`:'24 fps';$('hCam').textContent=(c.camera||'').split(/[(,+—]/)[0].trim().slice(0,22)}
+function select(fid,pid){film=DATA.films.find(f=>f.id===fid)||DATA.films[0];preset=film.presets.find(p=>p.id===pid)||film.presets[0];
+  adj={};U=uniforms();$('hold').hidden=!preset.engine.hold;if(!preset.engine.hold)holdOn=false;$('hold').setAttribute('aria-pressed',holdOn);
+  renderReel();renderVars();renderNotes();renderSw();renderAdj();hud();box();store.set('cc-preset',film.id+'|'+preset.id)}
+
+$('reel').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b)select(b.dataset.f)});
+$('vars').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b)select(film.id,b.dataset.p)});
+$('adj').addEventListener('input',e=>{const k=e.target.dataset.a;if(!k)return;adj[k]=+e.target.value;$('av-'+k).textContent=adj[k].toFixed(2);U=uniforms()});
+$('aReset').onclick=()=>{adj={};renderAdj();U=uniforms()};
+$('aCopy').onclick=async()=>{const txt=JSON.stringify({preset:preset.id,adjust:adj},null,1);try{await navigator.clipboard.writeText(txt);toast('조정값을 복사했어요')}catch(e){toast('복사가 막혀 있어요');$('adj').insertAdjacentHTML('afterend',`<pre class="note">${esc(txt)}</pre>`)}};
+$('mix').oninput=e=>{mixV=e.target.value/100;$('mixV').textContent=e.target.value+'%'};
+$('cmp').onclick=()=>{const on=split<0;split=on?.5:-1;$('cmp').setAttribute('aria-pressed',on);$('wipe').style.display=on?'block':'none';$('wipe').style.left='50%'};
+const drag=e=>{if(split<0)return;const r=$('vf').getBoundingClientRect();split=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));$('wipe').style.left=split*100+'%'};
+$('vf').addEventListener('pointerdown',e=>{drag(e);$('vf').setPointerCapture(e.pointerId)});$('vf').addEventListener('pointermove',e=>{if(e.buttons)drag(e)});
+$('hold').onclick=()=>{holdOn=!holdOn;$('hold').setAttribute('aria-pressed',holdOn);hud()};
+$('lb').onclick=()=>{maskOn=!maskOn;$('lb').setAttribute('aria-pressed',maskOn);box()};
+$('eco').onclick=()=>{eco=!eco;$('eco').setAttribute('aria-pressed',eco)};
+$('sCam').onclick=startCam;$('sChart').onclick=showChart;$('gClose').onclick=showChart;
+$('sFlip').onclick=()=>{facing=facing==='environment'?'user':'environment';startCam()};
+$('sFile').onclick=()=>$('fAny').click();$('gPhoto').onclick=()=>$('fPhoto').click();$('gVideo').onclick=()=>$('fVideo').click();
+for(const id of['fAny','fPhoto','fVideo'])$(id).onchange=e=>{loadFile(e.target.files[0]);e.target.value=''};
+$('shoot').onclick=()=>{capReq=true};
+$('shClose').onclick=()=>$('sheet').classList.remove('on');
+
+function capture(){const b=box(),dpr=cv.width/b.w,sx=b.x*dpr,sy=b.y*dpr,sw=b.aw*dpr,sh=b.ah*dpr;
+  const out=document.createElement('canvas'),slate=Math.round(Math.max(56,sh*.11));out.width=Math.round(sw);out.height=Math.round(sh)+slate;const x=out.getContext('2d');
+  x.drawImage(cv,sx,sy,sw,sh,0,0,out.width,Math.round(sh));x.fillStyle='#0d0e10';x.fillRect(0,Math.round(sh),out.width,slate);
+  const fs=Math.round(slate*.36);x.fillStyle='#ecebe6';x.font=`600 ${fs}px "Barlow Condensed", sans-serif`;x.textBaseline='middle';
+  x.fillText(`${film.title_ko} — ${preset.name}`,fs*.8,Math.round(sh)+slate/2);x.textAlign='right';x.fillStyle='#9c9d98';
+  x.fillText(`${preset.engine.aspect.toFixed(2)}:1  ${$('tc').textContent}  ${new Date().toLocaleDateString('ko-KR')}`,out.width-fs*.8,Math.round(sh)+slate/2);
+  const url=out.toDataURL('image/jpeg',.92);$('shot').src=url;lastBlob=null;out.toBlob(b=>{lastBlob=b},'image/jpeg',.92);$('sheet').classList.add('on')}
+let lastBlob=null,dlNs=null;
+try{window.claude?.use?.('downloads').then(n=>{dlNs=n}).catch(()=>{})}catch(e){}
+$('dl').onclick=async()=>{if(!lastBlob)return;const name=`${preset.id}.jpg`;
+  if(dlNs){try{await dlNs.save({filename:name,data:lastBlob});toast('저장했어요')}catch(e){toast(e?.code==='declined'?'저장을 취소했어요':'여기선 저장이 막혀 있어요. 이미지를 길게 눌러 저장하세요')}return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(lastBlob);a.download=name;document.body.appendChild(a);a.click();a.remove()};
+
+/* ---------- boot ---------- */
+if(initGL()){
+  useStill(CHART,1280,720);
+  fetch('presets.json').then(r=>r.json()).then(d=>{DATA=d;const [f,p]=(store.get('cc-preset')||'').split('|');select(f,p);requestAnimationFrame(frame)})
+  .catch(()=>{$('gateMsg').textContent='프리셋 데이터(presets.json)를 불러오지 못했어요. index.html과 같은 폴더에 두고 웹 서버로 열어 주세요.';$('gate').classList.add('on')});
+}
+}
+</script>
+</body>
+</html>
