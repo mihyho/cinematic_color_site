@@ -57,23 +57,28 @@ h1{font:600 32px/1.05 var(--hud);margin:4px 0 0;letter-spacing:.01em;text-wrap:b
 .shoot{width:64px;height:64px;border-radius:50%;padding:0;border:3px solid var(--ink);background:var(--rec);box-shadow:inset 0 0 0 4px var(--bg)}
 label.rg{display:grid;gap:2px;font-size:13px;color:var(--dim)}
 input[type=range]{width:100%;height:44px;accent-color:var(--ink);margin:0}
-.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
-.sw div{border-radius:8px;height:54px;display:flex;align-items:flex-end;padding:4px 6px;font:500 13px var(--hud);color:#fff;text-shadow:0 1px 2px #000}
-details{border-top:1px solid var(--line);padding:10px 0 2px}
-summary{cursor:pointer;font-weight:600;min-height:36px;display:flex;align-items:center}
-.note{font-size:15px;color:#d8d7d2}.note p{margin:.4em 0}.note ul{margin:.3em 0;padding-left:1.2em}.note li{margin:.15em 0}
 .k{color:var(--dim);font-size:13px;margin-top:10px}
-table{width:100%;border-collapse:collapse;font-size:14px}td{border-top:1px solid var(--line);padding:6px 8px 6px 0;vertical-align:top}td:first-child{color:var(--dim);white-space:nowrap;width:7em}
-a{color:var(--ink)}.src a{overflow-wrap:anywhere;font-size:13px}
-.tag{display:inline-block;font:500 13px var(--hud);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin-right:4px;color:var(--dim)}
-.adj{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px}
+.exp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dial{display:grid;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 10px 0}
+.dn{font-size:13px;color:var(--dim);line-height:1.2}
+.dial b{font:600 28px/1.15 var(--hud);letter-spacing:.01em;white-space:nowrap}
+.dial input[type=range]{height:40px}
+.metr{display:grid;gap:10px}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#evT{font:500 17px var(--hud);letter-spacing:.02em}
+.mt{position:relative;height:8px;border-radius:4px;margin:0 2px;background:linear-gradient(90deg,#4a2a28,#23262a 38%,#23262a 62%,#4a4526)}
+.mt::before{content:'';position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--dim)}
+.mt i{position:absolute;top:-6px;width:4px;height:20px;margin-left:-2px;border-radius:2px;background:var(--ink);transition:left .12s}
+.mt.warn i{background:var(--rec)}
+.fp{position:absolute;width:58px;height:58px;margin:-29px 0 0 -29px;border:1.5px solid #ffd54a;pointer-events:none;opacity:0;transition:opacity .5s}
+.fp.on{opacity:1;transition:none}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.86);display:none;place-items:center;padding:16px;z-index:5}
 .sheet.on{display:grid}.sheet .in{max-width:min(960px,100%);display:grid;gap:12px}
 .sheet img{width:100%;border-radius:6px;display:block}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#111;padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:6}
 .toast.on{opacity:1}
-@media(prefers-reduced-motion:reduce){.rec b{animation:none}.bar,.frame{transition:none}}
-@media(max-width:600px){#hCam{display:none}.vf{height:58vh}.ttl{font-size:17px}.hud{font-size:14px}table{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.rec b{animation:none}.bar,.frame,.mt i,.fp{transition:none}}
+@media(max-width:600px){.vf{height:58vh}.ttl{font-size:17px}.hud{font-size:14px}}
 </style>
 </head>
 <body>
@@ -83,6 +88,7 @@ a{color:var(--ink)}.src a{overflow-wrap:anywhere;font-size:13px}
     <div class="bar" id="b1"></div><div class="bar" id="b2"></div><div class="bar" id="b3"></div><div class="bar" id="b4"></div>
     <div class="frame" id="fr"><i></i><i></i><i></i><i></i></div>
     <div class="wipe" id="wipe"></div>
+    <div class="fp" id="fp"></div>
     <div class="hud t"><div class="g"><span class="rec"><b></b><span id="mode">CHART</span></span><span id="tc">00:00:00:00</span></div><div class="g"><span id="hAsp">2.39:1</span><span id="hWb">5600K</span></div></div>
     <div class="hud b"><div><div class="ttl" id="hTitle">—</div><span id="hName"></span></div><div class="g"><span id="hFps">24 fps</span><span id="hCam"></span></div></div>
     <div class="gate" id="gate"><p id="gateMsg"></p><div class="row"><button id="gPhoto">사진 찍기</button><button id="gVideo">영상 찍기</button><button id="gClose">테스트 차트로 보기</button></div></div>
@@ -95,20 +101,19 @@ a{color:var(--ink)}.src a{overflow-wrap:anywhere;font-size:13px}
       <input type="file" id="fAny" accept="image/*,video/*" hidden><input type="file" id="fPhoto" accept="image/*" capture="environment" hidden><input type="file" id="fVideo" accept="video/*" capture="environment" hidden>
     </div>
     <div><div class="reel" id="reel" role="group" aria-label="영화 선택"></div><div class="row" id="vars" role="group" aria-label="장면 룩"></div></div>
+    <div class="exp" role="group" aria-label="노출 설정">
+      <div class="dial"><span class="dn">조리개</span><b id="vAp">f/2.8</b><input type="range" id="rAp" min="0" max="8" step="1" aria-label="조리개"></div>
+      <div class="dial"><span class="dn">셔터</span><b id="vSh">1/48</b><input type="range" id="rSh" min="0" max="11" step="1" aria-label="셔터 스피드"></div>
+      <div class="dial"><span class="dn">ISO</span><b id="vIso">800</b><input type="range" id="rIso" min="0" max="7" step="1" aria-label="ISO"></div>
+    </div>
+    <div class="metr"><div class="mh"><span id="evT">적정 노출 ±0.0 EV</span><button class="chip" id="exR">기본값</button></div><div class="mt" id="mt"><i id="mk"></i></div>
+      <p class="k" style="margin:0">화면을 탭하면 초점이 옮겨가요. 셔터가 느리면 움직임이 번져요.</p></div>
     <div class="ctl">
       <button class="chip" id="cmp" aria-pressed="false">비교</button>
       <label class="rg">강도 <span id="mixV">100%</span><input type="range" id="mix" min="0" max="100" value="100"></label>
       <button class="shoot" id="shoot" aria-label="스틸 촬영"></button>
     </div>
     <div class="row"><button class="chip" id="hold" aria-pressed="false" hidden>스텝 프린팅</button><button class="chip" id="lb" aria-pressed="true">화면비 마스크</button><button class="chip" id="eco" aria-pressed="false">저전력</button></div>
-    <div><div class="k">이 룩의 팔레트 <span class="tag">추정</span></div><div class="sw" id="sw"></div></div>
-    <div id="notes"></div>
-    <details id="adjBox"><summary>직접 조정</summary>
-      <div class="adj" id="adj"></div>
-      <div class="row" style="margin-top:8px"><button id="aReset">초기화</button><button id="aCopy">값 복사</button></div>
-      <p class="k">조정값은 원본 수치 위에 더해집니다. 마음에 들면 복사해서 넘겨주세요. 프리셋에 반영할게요.</p>
-    </details>
-    <p class="k">영화 스틸·포스터는 쓰지 않았습니다. 수치는 공개 인터뷰·기사를 바탕으로 역산한 추정치이고, 원작의 실제 LUT가 아닙니다.</p>
   </section>
 </div>
 
@@ -122,8 +127,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200)};
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const BANDS=['red','orange','yellow','green','aqua','blue','purple','magenta'];
-const ADJ=[['warmth','따뜻함',-1,1],['tint','틴트 (초록↔마젠타)',-1,1],['sat','채도',-0.6,0.6],['contrast','대비',-0.5,0.5],['grain','그레인',-0.5,0.5],['bloom','블룸',-0.5,0.5],['vignette','비네트',-0.5,0.5]];
-let DATA=null,film=null,preset=null,adj={},srcKind='chart',facing='environment',stream=null,holdOn=false,eco=false,maskOn=true,split=-1,mixV=1;
+let DATA=null,film=null,preset=null,srcKind='chart',facing='environment',stream=null,holdOn=false,eco=false,maskOn=true,split=-1,mixV=1;
 
 /* ---------- WebGL ---------- */
 const cv=$('cv');
@@ -132,14 +136,15 @@ const VS=`attribute vec2 p;varying vec2 vUv;varying vec2 vSrc;uniform vec2 uSc,u
 void main(){vUv=p*.5+.5;vFr=(vUv-uFo)/uFs;vec2 s=uOf+vFr*uSc;s.x=mix(s.x,1.-s.x,uMir);vSrc=s;gl_Position=vec4(p,0.,1.);}`;
 const GRADE=`precision mediump float;varying vec2 vUv;varying vec2 vSrc;varying vec2 vFr;uniform sampler2D uSrc;
 uniform vec3 uWB,uLift,uGamma,uGain,uShT,uHiT,uMonoW,uHazeC;uniform mat3 uMat;
-uniform float uSat,uEnr,uDuo,uBlack,uWhite,uS,uMono,uSel,uHaze;uniform float uBS[8];uniform float uBL[8];uniform vec4 uSelA;uniform vec2 uSelB;
+uniform float uSat,uEnr,uDuo,uBlack,uWhite,uS,uMono,uSel,uHaze,uExp,uDirect;uniform float uBS[8];uniform float uBL[8];uniform vec4 uSelA;uniform vec2 uSelB;
 const vec3 W=vec3(.2126,.7152,.0722);
 vec3 rgb2hsv(vec3 c){vec4 K=vec4(0.,-1./3.,2./3.,-1.);vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));float d=q.x-min(q.w,q.y);return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x);}
 vec3 hsv2rgb(vec3 c){vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.);return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y);}
 float ctr(int i){if(i==0)return 0.;if(i==1)return 30.;if(i==2)return 60.;if(i==3)return 120.;if(i==4)return 180.;if(i==5)return 240.;if(i==6)return 280.;return 320.;}
 float hd(float a,float b){float d=abs(a-b);return min(d,360.-d);}
 void main(){
- vec3 c=texture2D(uSrc,vSrc).rgb;
+ vec3 c=texture2D(uSrc,mix(vSrc,vUv,uDirect)).rgb;
+ c=pow(max(c,0.),vec3(2.2));c=pow(min(c*uExp,1.),vec3(1./2.2));
  c=uMat*(c*uWB);
  c=mix(c,vec3(c.r,vec2((c.g+c.b)*.5)),uDuo);
  vec3 h=rgb2hsv(clamp(c,0.,1.));float hue=h.x*360.;
@@ -163,19 +168,30 @@ void main(){
  c=mix(c,mix(mono,keep,m*uSel),uMono);
  float inS=step(0.,vSrc.x)*step(vSrc.x,1.)*step(0.,vSrc.y)*step(vSrc.y,1.);
  gl_FragColor=vec4(clamp(c,0.,1.)*inS,1.);}`;
+const ACC=`precision mediump float;varying vec2 vUv;varying vec2 vSrc;varying vec2 vFr;uniform sampler2D uSrc,uPrev;uniform float uA;
+void main(){float inS=step(0.,vSrc.x)*step(vSrc.x,1.)*step(0.,vSrc.y)*step(vSrc.y,1.);
+ vec3 c=texture2D(uSrc,vSrc).rgb*inS;gl_FragColor=vec4(mix(c,texture2D(uPrev,vUv).rgb,uA),1.);}`;
 const POST=`precision mediump float;varying vec2 vUv;varying vec2 vSrc;varying vec2 vFr;uniform float uFa;uniform sampler2D uG,uSrc;
-uniform vec2 uPx;uniform float uAsp,uBloom,uHal,uStreak,uGrain,uVig,uSharp,uMix,uSplit,uT;uniform vec3 uStC;
+uniform vec2 uPx,uFocus;uniform float uAsp,uBloom,uHal,uStreak,uGrain,uVig,uSharp,uMix,uSplit,uT,uDof,uNoise;uniform vec3 uStC;
 const vec3 W=vec3(.2126,.7152,.0722);
 float hash(vec2 p){p=mod(p,512.);return fract(sin(dot(p,vec2(12.9898,78.233))+uT)*43758.5453);}
 void main(){
  vec3 g=texture2D(uG,vUv).rgb;vec3 b1=vec3(0.),b2=vec3(0.),bl=vec3(0.),st=vec3(0.);
  vec2 k=vec2(1./uAsp,1.);
- for(int i=0;i<12;i++){float a=float(i)*.5236;vec2 d=vec2(cos(a),sin(a))*k;
-  vec3 s1=texture2D(uG,vUv+d*.016).rgb;vec3 s2=texture2D(uG,vUv+d*.042+.0).rgb;
-  bl+=s1;b1+=max(s1-.7,0.)/.3;b2+=max(s2-.7,0.)/.3;}
- b1/=12.;b2/=12.;bl/=12.;
- for(int i=0;i<10;i++){float x=(float(i)-4.5)/4.5;st+=max(texture2D(uG,vUv+vec2(x*.09,0.)).rgb-.82,0.)/.18*(1.-abs(x));}
- st/=5.;
+ if(uDof>.002){
+  float rr=uDof*smoothstep(.05,.6,length((vFr-uFocus)*vec2(uFa,1.)));
+  float rot=hash(gl_FragCoord.xy+3.)*6.2832;vec3 acc=g;float ws=1.;
+  for(int i=0;i<16;i++){float a=float(i)*2.39996+rot;vec2 d=vec2(cos(a),sin(a))*sqrt((float(i)+.5)/16.)*rr*k;
+   vec3 s=texture2D(uG,vUv+d).rgb;float wt=1.+4.*pow(max(dot(s,W)-.7,0.)/.3,2.);acc+=s*wt;ws+=wt;}
+  g=acc/ws;}
+ if(uBloom+uHal+uSharp>.001){
+  for(int i=0;i<12;i++){float a=float(i)*.5236;vec2 d=vec2(cos(a),sin(a))*k;
+   vec3 s1=texture2D(uG,vUv+d*.016).rgb;vec3 s2=texture2D(uG,vUv+d*.042).rgb;
+   bl+=s1;b1+=max(s1-.7,0.)/.3;b2+=max(s2-.7,0.)/.3;}
+  b1/=12.;b2/=12.;bl/=12.;}
+ if(uStreak>.001){
+  for(int i=0;i<10;i++){float x=(float(i)-4.5)/4.5;st+=max(texture2D(uG,vUv+vec2(x*.09,0.)).rgb-.82,0.)/.18*(1.-abs(x));}
+  st/=5.;}
  g+=(b1*.55+b2*.45)*uBloom*.85;
  g+=vec3(1.,.32,.12)*dot(b1,vec3(.333))*uHal*.9;
  g+=uStC*dot(st,vec3(.333))*uStreak;
@@ -184,36 +200,39 @@ void main(){
  g*=1.-uVig*.6*smoothstep(.3,1.,r);
  float n=hash(floor(gl_FragCoord.xy))-.5;float Lg=dot(g,W);
  g+=n*uGrain*.16*(.35+max(1.-abs(Lg-.45)*1.6,0.));
+ vec3 nz=vec3(hash(gl_FragCoord.xy+17.),hash(gl_FragCoord.xy+41.),hash(gl_FragCoord.xy+73.))-.5;
+ g+=(nz*.6+n*.4)*uNoise*(1.3-Lg);
  vec3 o=texture2D(uSrc,vSrc).rgb*step(0.,vSrc.x)*step(vSrc.x,1.)*step(0.,vSrc.y)*step(vSrc.y,1.);
  g=mix(o,clamp(g,0.,1.),uMix);
  if(uSplit>=0.&&vUv.x<uSplit)g=o;
  gl_FragColor=vec4(g,1.);}`;
 function prog(fs){const p=gl.createProgram();for(const[t,s]of[[gl.VERTEX_SHADER,VS],[gl.FRAGMENT_SHADER,fs]]){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));gl.attachShader(p,sh)}gl.linkProgram(p);const u={};return{p,u:n=>u[n]??(u[n]=gl.getUniformLocation(p,n))}}
-let P1,P2,srcTex,fbo,fboTex,fboW=0,fboH=0;
+let P0,P1,P2,srcTex,fbo,fboTex,fboW=0,fboH=0,accTex=[],accFbo=[];
 function tex(){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);for(const[k,v]of[[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v);return t}
 function initGL(){
   if(!gl){$('gateMsg').textContent='이 브라우저는 WebGL을 지원하지 않아 색감을 입힐 수 없어요.';$('gate').classList.add('on');return false}
-  P1=prog(GRADE);P2=prog(POST);
+  P0=prog(ACC);P1=prog(GRADE);P2=prog(POST);
   const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-  for(const P of[P1,P2]){const l=gl.getAttribLocation(P.p,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0)}
-  srcTex=tex();fboTex=tex();fbo=gl.createFramebuffer();return true}
-function sizeFbo(w,h){if(w===fboW&&h===fboH)return;fboW=w;fboH=h;gl.bindTexture(gl.TEXTURE_2D,fboTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,fboTex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
+  for(const P of[P0,P1,P2]){const l=gl.getAttribLocation(P.p,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0)}
+  srcTex=tex();fboTex=tex();fbo=gl.createFramebuffer();accTex=[tex(),tex()];accFbo=[gl.createFramebuffer(),gl.createFramebuffer()];return true}
+function attach(f,t,w,h){gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,f);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0)}
+function sizeFbo(w,h){if(w===fboW&&h===fboH)return;fboW=w;fboH=h;accValid=false;attach(fbo,fboTex,w,h);attach(accFbo[0],accTex[0],w,h);attach(accFbo[1],accTex[1],w,h);gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
 
 /* ---------- preset → uniforms ---------- */
 const hueVec=(h,s)=>{const f=n=>{const k=(n+h/60)%6;return 1-Math.max(0,Math.min(k,4-k,1))};const c=[f(5),f(3),f(1)];const L=.2126*c[0]+.7152*c[1]+.0722*c[2];return c.map(x=>(x-L)*s*.35)};
 function uniforms(){
-  const g=preset.grade,e=preset.engine,t=preset.texture,A=k=>adj[k]||0;
-  const w=e.warmth+A('warmth'),ti=g.white_balance.tint+A('tint');
+  const g=preset.grade,e=preset.engine,t=preset.texture;
+  const w=e.warmth,ti=g.white_balance.tint;
   let wb=[1+.28*w+.08*ti,1-.2*ti,1-.28*w+.08*ti];const L=.2126*wb[0]+.7152*wb[1]+.0722*wb[2];wb=wb.map(x=>x/L);
   const M=e.matrix||[1,0,0,0,1,0,0,0,1];
   const mono=g.monochrome?.enabled?1:0,sel=g.selective_color||{};
   return{wb,mat:[M[0],M[3],M[6],M[1],M[4],M[7],M[2],M[5],M[8]],duo:e.duotone||0,enr:e.enr||0,
-    sat:Math.max(0,g.saturation+A('sat')),bs:BANDS.map(b=>g.hue_adjust[b].sat),bl:BANDS.map(b=>g.hue_adjust[b].lum),
+    sat:Math.max(0,g.saturation),bs:BANDS.map(b=>g.hue_adjust[b].sat),bl:BANDS.map(b=>g.hue_adjust[b].lum),
     lift:g.lift,gamma:g.gamma,gain:g.gain,shT:hueVec(g.split_tone.shadow_hue,g.split_tone.shadow_sat),hiT:hueVec(g.split_tone.highlight_hue,g.split_tone.highlight_sat),
-    black:Math.max(0,g.contrast.black*.7),white:g.contrast.white,s:Math.min(1,Math.max(0,g.contrast.s_curve+A('contrast'))),
+    black:Math.max(0,g.contrast.black*.7),white:g.contrast.white,s:Math.min(1,Math.max(0,g.contrast.s_curve)),
     haze:e.haze||0,hazeC:e.hazeColor||[1,1,1],mono,monoW:g.monochrome?.channel_weights||[.2126,.7152,.0722],
     sel:sel.enabled?1:0,selA:[sel.hue_center||0,sel.hue_width||0,(sel.feather||.1)*100,sel.chroma_gain||1],selB:[sel.sat_min||0,sel.lum_min||0],
-    bloom:Math.max(0,(t.bloom||0)+A('bloom')),hal:t.halation||0,grain:Math.max(0,(t.grain||0)+A('grain')),vig:Math.max(0,(t.vignette||0)+A('vignette')),
+    bloom:t.bloom||0,hal:t.halation||0,grain:t.grain||0,vig:t.vignette||0,
     sharp:Math.max(0,((t.sharpness??.7)-.6))*.9,streak:e.streak?.55:0,stC:/앰버|amber|따뜻/i.test(t.flare||'')?[1,.6,.3]:[.45,.65,1]}}
 let U=null;
 
@@ -233,7 +252,13 @@ function chart(){const c=document.createElement('canvas');c.width=1280;c.height=
   P.forEach((c,i)=>{x.fillStyle=c;x.fillRect(860+(i%4)*96,300+Math.floor(i/4)*96,88,88)});
   for(let i=0;i<10;i++){const v=Math.round(i/9*255);x.fillStyle=`rgb(${v},${v},${v})`;x.fillRect(860+i*38.4,600,38.4,70)}
   return c}
-const CHART=chart();
+const CBASE=chart(),CHART=document.createElement('canvas'),CX=CHART.getContext('2d');CHART.width=1280;CHART.height=720;
+/* 테스트 차트는 움직이는 물체(공, 프로펠러)를 얹어 셔터 효과를 눈으로 볼 수 있게 한다 */
+function liveChart(now){const t=now/1000;CX.drawImage(CBASE,0,0);
+  const bx=((t*520)%1500)-110,by=190+Math.sin(t*2.2)*28,g=CX.createRadialGradient(bx,by,2,bx,by,30);g.addColorStop(0,'#fff');g.addColorStop(1,'#ffd36a');
+  CX.fillStyle=g;CX.beginPath();CX.arc(bx,by,28,0,7);CX.fill();
+  CX.save();CX.translate(215,120);CX.rotate(t*12.5);CX.fillStyle='#16151a';CX.fillRect(-78,-7,156,14);CX.fillStyle='#e5322d';CX.fillRect(-78,-7,30,14);CX.fillRect(48,-7,30,14);
+  CX.beginPath();CX.arc(0,0,11,0,7);CX.fillStyle='#ecebe6';CX.fill();CX.restore()}
 function useStill(el,w,h){still=el;srcW=w;srcH=h;dirty=true}
 function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('sFlip').hidden=true}
 function setMode(k){srcKind=k;$('mode').textContent={live:'LIVE',photo:'PHOTO',clip:'CLIP',chart:'CHART'}[k]}
@@ -252,11 +277,15 @@ function loadFile(f){if(!f)return;stopCam();const url=URL.createObjectURL(f);
 
 /* ---------- render ---------- */
 const t0=performance.now();
+let lastT=t0,lastC=0,accIdx=0,accValid=false,capReq=false;
+function view(P,sc,of,fo,fs,mir){const f=P.u;gl.uniform2fv(f('uSc'),sc);gl.uniform2fv(f('uOf'),of);gl.uniform2fv(f('uFo'),fo);gl.uniform2fv(f('uFs'),fs);gl.uniform1f(f('uMir'),mir)}
 function frame(now){
   requestAnimationFrame(frame);if(!U)return;
+  const dt=Math.min(.1,Math.max(.004,(now-lastT)/1000));lastT=now;
   const vf=$('vf'),dpr=Math.min(devicePixelRatio||1,2)*(eco?.55:1),W=Math.round(vf.clientWidth*dpr),H=Math.round(vf.clientHeight*dpr);
   if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}sizeFbo(W,H);
-  gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  if(still===CHART&&now-lastC>33){liveChart(now);dirty=true;lastC=now}
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
   if(still){if(dirty){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,still);dirty=false}}
   else if(video.readyState>=2){srcW=video.videoWidth;srcH=video.videoHeight;
     const hold=holdOn&&preset.engine.hold,step=hold?Math.floor((now-t0)/1000*24/hold):-2;
@@ -266,25 +295,33 @@ function frame(now){
   let sc=[1,1],of=[0,0];if(sa>fa){sc=[fa/sa,1];of=[(1-fa/sa)/2,0]}else{sc=[1,sa/fa];of=[0,(1-sa/fa)/2]}
   const mir=srcKind==='live'&&facing==='user'?1:0;
   gl.viewport(0,0,W,H);
-  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.useProgram(P1.p);const u=P1.u;
-  gl.uniform2fv(u('uSc'),sc);gl.uniform2fv(u('uOf'),of);gl.uniform2fv(u('uFo'),fo);gl.uniform2fv(u('uFs'),fs);gl.uniform1f(u('uMir'),mir);
-  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.uniform1i(u('uSrc'),0);
+  /* 느린 셔터: 이전 프레임과 섞어 모션 블러 (1/60초 이하에서는 생략) */
+  const tau=Math.max(0,(1/X.den-1/60)*.8),a=tau>0?Math.exp(-dt/tau):0;let direct=0;
+  if(a>.03){const rd=accIdx,wr=1-rd;
+    gl.bindFramebuffer(gl.FRAMEBUFFER,accFbo[wr]);gl.useProgram(P0.p);view(P0,sc,of,fo,fs,mir);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);gl.uniform1i(P0.u('uSrc'),0);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,accTex[rd]);gl.uniform1i(P0.u('uPrev'),1);gl.uniform1f(P0.u('uA'),accValid?a:0);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);accIdx=wr;accValid=true;direct=1}
+  else accValid=false;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.useProgram(P1.p);const u=P1.u;view(P1,sc,of,fo,fs,mir);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,direct?accTex[accIdx]:srcTex);gl.uniform1i(u('uSrc'),0);
+  gl.uniform1f(u('uExp'),X.exp);gl.uniform1f(u('uDirect'),direct);
   gl.uniform3fv(u('uWB'),U.wb);gl.uniformMatrix3fv(u('uMat'),false,U.mat);gl.uniform1f(u('uDuo'),U.duo);gl.uniform1f(u('uEnr'),U.enr);gl.uniform1f(u('uSat'),U.sat);
   gl.uniform1fv(u('uBS'),U.bs);gl.uniform1fv(u('uBL'),U.bl);gl.uniform3fv(u('uLift'),U.lift);gl.uniform3fv(u('uGamma'),U.gamma);gl.uniform3fv(u('uGain'),U.gain);
   gl.uniform3fv(u('uShT'),U.shT);gl.uniform3fv(u('uHiT'),U.hiT);gl.uniform1f(u('uBlack'),U.black);gl.uniform1f(u('uWhite'),U.white);gl.uniform1f(u('uS'),U.s);
   gl.uniform1f(u('uHaze'),U.haze);gl.uniform3fv(u('uHazeC'),U.hazeC);gl.uniform1f(u('uMono'),U.mono);gl.uniform3fv(u('uMonoW'),U.monoW);
   gl.uniform1f(u('uSel'),U.sel);gl.uniform4fv(u('uSelA'),U.selA);gl.uniform2fv(u('uSelB'),U.selB);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.useProgram(P2.p);const v=P2.u;
-  gl.uniform2fv(v('uSc'),sc);gl.uniform2fv(v('uOf'),of);gl.uniform2fv(v('uFo'),fo);gl.uniform2fv(v('uFs'),fs);gl.uniform1f(v('uFa'),fa);gl.uniform1f(v('uMir'),mir);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.useProgram(P2.p);const v=P2.u;view(P2,sc,of,fo,fs,mir);gl.uniform1f(v('uFa'),fa);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);
   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,fboTex);gl.uniform1i(v('uG'),1);gl.uniform1i(v('uSrc'),0);
   gl.uniform2f(v('uPx'),1/W,1/H);gl.uniform1f(v('uAsp'),ca);gl.uniform1f(v('uBloom'),U.bloom);gl.uniform1f(v('uHal'),U.hal);gl.uniform1f(v('uStreak'),U.streak);gl.uniform3fv(v('uStC'),U.stC);
-  gl.uniform1f(v('uGrain'),U.grain);gl.uniform1f(v('uVig'),U.vig);gl.uniform1f(v('uSharp'),U.sharp);gl.uniform1f(v('uMix'),mixV);gl.uniform1f(v('uSplit'),split);gl.uniform1f(v('uT'),(now%10000)/97);
+  gl.uniform1f(v('uGrain'),U.grain);gl.uniform1f(v('uVig'),U.vig+X.vigAdd);gl.uniform1f(v('uSharp'),U.sharp);gl.uniform1f(v('uMix'),mixV);gl.uniform1f(v('uSplit'),split);gl.uniform1f(v('uT'),(now%10000)/97);
+  gl.uniform1f(v('uDof'),X.dof);gl.uniform1f(v('uNoise'),X.noise);gl.uniform2fv(v('uFocus'),focus);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   const f=Math.floor((now-t0)/1000*24),p2=n=>String(n).padStart(2,'0');
   $('tc').textContent=`${p2(Math.floor(f/86400))}:${p2(Math.floor(f/1440)%60)}:${p2(Math.floor(f/24)%60)}:${p2(f%24)}`;
   if(capReq){capReq=false;capture()}}
-let capReq=false;
 
 /* ---------- letterbox ---------- */
 function box(){const vf=$('vf'),w=vf.clientWidth,h=vf.clientHeight,a=preset?.engine.aspect||1.85;
@@ -300,37 +337,25 @@ const pal=p=>p.grade.palette_hex||[];
 function renderReel(){$('reel').innerHTML=DATA.films.map(f=>{const c=pal(f.presets[0]);const pick=[c[0],c[Math.floor(c.length/2)],c[c.length-1]];
   return`<button class="can" data-f="${f.id}" aria-pressed="${f===film}"><span class="pal">${pick.map(x=>`<i style="background:${x}"></i>`).join('')}</span><span class="lb"><b>${esc(f.title_ko)}</b><small>${f.year}${f.added_reason?' · 추가':''}</small></span></button>`}).join('')}
 function renderVars(){$('vars').innerHTML=film.presets.length>1?film.presets.map(p=>`<button class="chip" data-p="${p.id}" aria-pressed="${p===preset}">${esc(p.name)}</button>`).join(''):''}
-const li=a=>(a||[]).length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';
-function renderNotes(){const p=preset,c=p.credits,l=p.lighting||{},t=p.texture,e=p.engine;
-  const cred=[['촬영',c.dp],['컬러리스트',c.colorist],['카메라',c.camera],['필름·센서',c.film_stock_or_sensor],['렌즈',c.lens],['화면비',c.aspect_ratio],['후반',c.di_process],['메모',c.note]].filter(r=>r[1]);
-  const fx=[e.matrix&&'채널 행렬(필터·인쇄 에뮬레이션)',e.duotone&&'2색 테크니컬러 근사',e.enr&&'ENR(은 잔류) 근사',e.haze&&'대기 헤이즈',e.hold&&`스텝 프린팅 ${24/e.hold}fps`,e.streak&&'가로 플레어'].filter(Boolean);
-  $('notes').innerHTML=`
-  <details open><summary>의도</summary><div class="note"><p>${esc(p.intent)}</p>${p.added_reason||film.added_reason?`<p class="k">추가 선정 이유 · ${esc(p.added_reason||film.added_reason)}</p>`:''}</div></details>
-  <details><summary>조명</summary><div class="note"><p><b>키</b> ${esc(l.key)}</p>${li(l.sources)}<p><b>색온도</b> ${esc(l.color_temp)}<br><b>키:필</b> ${esc(l.ratio)}<br><b>장소</b> ${esc(l.indoor_outdoor)}</p>${li(l.special)}</div></details>
-  <details><summary>피부와 질감</summary><div class="note"><p>${esc(p.grade.skin)}</p><p><span class="tag">그레인 ${t.grain}</span><span class="tag">할레이션 ${t.halation}</span><span class="tag">블룸 ${t.bloom}</span><span class="tag">비네트 ${t.vignette}</span></p><p>${esc(t.grain_size)}</p><p>${esc(t.flare)}</p></div></details>
-  <details><summary>크레딧</summary><table class="note">${cred.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])}</td></tr>`).join('')}</table></details>
-  <details><summary>셰이더 메모</summary><div class="note">${li(p.shader_notes)}<p class="k">이 사이트의 해석 · 화이트밸런스를 ${e.wbSense==='light'?'광원 색온도(낮을수록 따뜻함)':'라이트룸식(높을수록 따뜻함)'}로 읽음${fx.length?' · '+fx.join(' · '):''}</p></div></details>
-  <details><summary>확인된 사실과 추정</summary><div class="note"><p class="k">확인됨</p>${li(film.confidence.verified)}<p class="k">추정</p>${li(film.confidence.estimated)}</div></details>
-  <details><summary>출처 ${film.sources.length}개</summary><div class="note src"><ul>${film.sources.map(s=>`<li><a href="${esc(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/,''))}</a></li>`).join('')}</ul></div></details>`}
-function renderSw(){$('sw').innerHTML=pal(preset).map(x=>`<div style="background:${x}">${x}</div>`).join('')}
-function renderAdj(){$('adj').innerHTML=ADJ.map(([k,n,a,b])=>`<label class="rg">${n} <span id="av-${k}">${(adj[k]||0).toFixed(2)}</span><input type="range" data-a="${k}" min="${a}" max="${b}" step="0.01" value="${adj[k]||0}"></label>`).join('')}
-function hud(){const g=preset.grade,c=preset.credits,e=preset.engine;
+function hud(){const g=preset.grade,e=preset.engine;
   $('hTitle').textContent=film.title_ko;$('hName').textContent=preset.name+' · '+film.year;
   $('hAsp').textContent=e.aspect.toFixed(2)+':1';$('hWb').textContent=g.white_balance.kelvin+'K · '+(g.white_balance.tint>=0?'M':'G')+Math.abs(g.white_balance.tint).toFixed(2);
-  $('hFps').textContent=holdOn&&e.hold?`${24/e.hold} fps ×${e.hold}`:'24 fps';$('hCam').textContent=(c.camera||'').split(/[(,+—]/)[0].trim().slice(0,22)}
+  $('hFps').textContent=holdOn&&e.hold?`${24/e.hold} fps ×${e.hold}`:'24 fps';$('hCam').textContent=expText()}
 function select(fid,pid){film=DATA.films.find(f=>f.id===fid)||DATA.films[0];preset=film.presets.find(p=>p.id===pid)||film.presets[0];
-  adj={};U=uniforms();$('hold').hidden=!preset.engine.hold;if(!preset.engine.hold)holdOn=false;$('hold').setAttribute('aria-pressed',holdOn);
-  renderReel();renderVars();renderNotes();renderSw();renderAdj();hud();box();store.set('cc-preset',film.id+'|'+preset.id)}
+  U=uniforms();$('hold').hidden=!preset.engine.hold;if(!preset.engine.hold)holdOn=false;$('hold').setAttribute('aria-pressed',holdOn);
+  renderReel();renderVars();hud();box();store.set('cc-preset',film.id+'|'+preset.id)}
 
 $('reel').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b)select(b.dataset.f)});
 $('vars').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b)select(film.id,b.dataset.p)});
-$('adj').addEventListener('input',e=>{const k=e.target.dataset.a;if(!k)return;adj[k]=+e.target.value;$('av-'+k).textContent=adj[k].toFixed(2);U=uniforms()});
-$('aReset').onclick=()=>{adj={};renderAdj();U=uniforms()};
-$('aCopy').onclick=async()=>{const txt=JSON.stringify({preset:preset.id,adjust:adj},null,1);try{await navigator.clipboard.writeText(txt);toast('조정값을 복사했어요')}catch(e){toast('복사가 막혀 있어요');$('adj').insertAdjacentHTML('afterend',`<pre class="note">${esc(txt)}</pre>`)}};
 $('mix').oninput=e=>{mixV=e.target.value/100;$('mixV').textContent=e.target.value+'%'};
 $('cmp').onclick=()=>{const on=split<0;split=on?.5:-1;$('cmp').setAttribute('aria-pressed',on);$('wipe').style.display=on?'block':'none';$('wipe').style.left='50%'};
 const drag=e=>{if(split<0)return;const r=$('vf').getBoundingClientRect();split=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));$('wipe').style.left=split*100+'%'};
-$('vf').addEventListener('pointerdown',e=>{drag(e);$('vf').setPointerCapture(e.pointerId)});$('vf').addEventListener('pointermove',e=>{if(e.buttons)drag(e)});
+$('vf').addEventListener('pointerdown',e=>{
+  if(split>=0){drag(e);$('vf').setPointerCapture(e.pointerId);return}
+  const r=$('vf').getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,m=maskOn&&RB?RB:{x:0,y:0,aw:r.width,ah:r.height};
+  focus=[Math.min(1,Math.max(0,(px-m.x)/m.aw)),Math.min(1,Math.max(0,1-(py-m.y)/m.ah))];
+  const f=$('fp');f.style.left=px+'px';f.style.top=py+'px';f.classList.add('on');clearTimeout(f._h);f._h=setTimeout(()=>f.classList.remove('on'),1300)});
+$('vf').addEventListener('pointermove',e=>{if(e.buttons&&split>=0)drag(e)});
 $('hold').onclick=()=>{holdOn=!holdOn;$('hold').setAttribute('aria-pressed',holdOn);hud()};
 $('lb').onclick=()=>{maskOn=!maskOn;$('lb').setAttribute('aria-pressed',maskOn);box()};
 $('eco').onclick=()=>{eco=!eco;$('eco').setAttribute('aria-pressed',eco)};
@@ -341,12 +366,33 @@ for(const id of['fAny','fPhoto','fVideo'])$(id).onchange=e=>{loadFile(e.target.f
 $('shoot').onclick=()=>{capReq=true};
 $('shClose').onclick=()=>$('sheet').classList.remove('on');
 
+/* ---------- exposure: 조리개 · 셔터 · ISO ---------- */
+const AP=[1.4,1.8,2,2.8,4,5.6,8,11,16],SH=[4,8,15,30,48,60,125,250,500,1000,2000,4000],ISO=[100,200,400,800,1600,3200,6400,12800],DEF={ap:3,sh:4,iso:3};
+let ex={...DEF},X={},focus=[.5,.5];
+try{const o=JSON.parse(store.get('cc-exp')||'null');if(o&&AP[o.ap]&&SH[o.sh]&&ISO[o.iso])ex={ap:o.ap|0,sh:o.sh|0,iso:o.iso|0}}catch(err){}
+const expText=()=>`f/${AP[ex.ap]} · 1/${SH[ex.sh]} · ISO ${ISO[ex.iso]}`;
+function expo(){const N=AP[ex.ap],den=SH[ex.sh],iso=ISO[ex.iso];
+  const ev=Math.log2(iso/800)+Math.log2(48/den)+2*Math.log2(2.8/N);   /* 기준 f/2.8 · 1/48 · ISO 800 = 0 EV */
+  const dofT=Math.min(1,Math.max(0,Math.log2(8/N)/2.5));
+  X={ev,exp:2**ev,den,dof:.012*dofT,vigAdd:.2*dofT,noise:.02*(iso/800)**.85}}
+function syncExp(save){expo();
+  $('vAp').textContent='f/'+AP[ex.ap];$('vSh').textContent='1/'+SH[ex.sh];$('vIso').textContent=ISO[ex.iso];
+  $('rAp').value=ex.ap;$('rSh').value=ex.sh;$('rIso').value=ex.iso;
+  const ev=X.ev,c=Math.max(-3,Math.min(3,ev)),a=Math.abs(ev).toFixed(1);
+  $('mk').style.left=(c+3)/6*100+'%';$('mt').classList.toggle('warn',Math.abs(ev)>2);
+  $('evT').textContent=(Math.abs(ev)<.34?'적정 노출':ev>0?'노출 과다':'노출 부족')+' '+(a==='0.0'?'±':ev<0?'−':'+')+a+' EV';
+  if(preset)hud();if(save)store.set('cc-exp',JSON.stringify(ex))}
+for(const[k,id]of[['ap','rAp'],['sh','rSh'],['iso','rIso']])$(id).oninput=e=>{ex[k]=+e.target.value;syncExp(true)};
+$('exR').onclick=()=>{ex={...DEF};syncExp(true)};
+syncExp(false);
+
+
 function capture(){const b=box(),dpr=cv.width/b.w,sx=b.x*dpr,sy=b.y*dpr,sw=b.aw*dpr,sh=b.ah*dpr;
-  const out=document.createElement('canvas'),slate=Math.round(Math.max(56,sh*.11));out.width=Math.round(sw);out.height=Math.round(sh)+slate;const x=out.getContext('2d');
+  const out=document.createElement('canvas'),slate=Math.round(Math.max(72,sh*.15));out.width=Math.round(sw);out.height=Math.round(sh)+slate;const x=out.getContext('2d');
   x.drawImage(cv,sx,sy,sw,sh,0,0,out.width,Math.round(sh));x.fillStyle='#0d0e10';x.fillRect(0,Math.round(sh),out.width,slate);
-  const fs=Math.round(slate*.36);x.fillStyle='#ecebe6';x.font=`600 ${fs}px "Barlow Condensed", sans-serif`;x.textBaseline='middle';
-  x.fillText(`${film.title_ko} — ${preset.name}`,fs*.8,Math.round(sh)+slate/2);x.textAlign='right';x.fillStyle='#9c9d98';
-  x.fillText(`${preset.engine.aspect.toFixed(2)}:1  ${$('tc').textContent}  ${new Date().toLocaleDateString('ko-KR')}`,out.width-fs*.8,Math.round(sh)+slate/2);
+  const fs=Math.round(slate*.28);x.textBaseline='middle';x.textAlign='left';
+  x.fillStyle='#ecebe6';x.font=`600 ${fs}px "Barlow Condensed", sans-serif`;x.fillText(`${film.title_ko} — ${preset.name}`,fs*.8,Math.round(sh)+slate*.34);
+  x.fillStyle='#9c9d98';x.font=`500 ${Math.round(fs*.85)}px "Barlow Condensed", sans-serif`;x.fillText(`${expText()}  ·  ${preset.engine.aspect.toFixed(2)}:1  ·  ${$('tc').textContent}`,fs*.8,Math.round(sh)+slate*.74);
   const url=out.toDataURL('image/jpeg',.92);$('shot').src=url;lastBlob=null;out.toBlob(b=>{lastBlob=b},'image/jpeg',.92);$('sheet').classList.add('on')}
 let lastBlob=null,dlNs=null;
 try{window.claude?.use?.('downloads').then(n=>{dlNs=n}).catch(()=>{})}catch(e){}
